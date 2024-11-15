@@ -26,6 +26,18 @@ services:
     volumes:
       - mongodb_data:/data/db
 
+  test:
+    build: 
+      context: ./backend/tests
+      dockerfile: Dockerfile
+    environment:
+      - MONGO_URI=mongodb://mongo:27017/music_db
+    depends_on:
+      - mongo
+      - backend
+    profiles:
+      - donotstart
+
 volumes:
   mongodb_data:
     driver: local
