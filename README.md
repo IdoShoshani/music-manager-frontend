@@ -15,7 +15,7 @@ A web application for managing music collections with artists, playlists, and fa
 
 1. **Clone the repository**:
     ```bash
-    git clone https://github.com/username/music-manager.git
+    git clone https://gitlab.com/sela-tracks/1109/students/idosh/final_project/application/music-manager.git
     cd music-manager
     ```
 2. **Ensure Docker and Docker Compose are installed**.
