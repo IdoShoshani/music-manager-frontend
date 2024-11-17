@@ -11,7 +11,7 @@ metadata:
 spec:
   containers:
   - name: jnlp
-    image: jenkins/inbound-agent:latest
+    image: idoshoshani123/agent-for-jenkins-with-docker:latest
     """
         }
     }
