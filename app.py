@@ -8,6 +8,11 @@ load_dotenv()
 app = Flask(__name__)
 BACKEND_URL = os.getenv("BACKEND_URL", "http://backend:5000/api")
 
+@app.route("/health")
+def health_check():
+    # Checks the health of the frontend
+    return {"status": "healthy"}, 200
+
 @app.route("/")
 def index():
     # Fetch all required data
