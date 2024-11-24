@@ -1,0 +1,23 @@
+replicaCount: 1
+
+image:
+  repository: idoshoshani123/music-app-frontend
+  tag: "1.1"
+  pullPolicy: IfNotPresent
+
+service:
+  type: LoadBalancer
+  port: 80
+
+env:
+  BACKEND_URL: "http://music-app-backend:5000/api"
+
+livenessProbe:
+  enabled: true
+  initialDelaySeconds: 30
+  periodSeconds: 10
+  timeoutSeconds: 5
+  failureThreshold: 3
+  path: /health
+
+resources: {}
