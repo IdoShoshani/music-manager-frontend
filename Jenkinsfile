@@ -23,7 +23,7 @@ pipeline {
         stage('Python Linter') {
             steps {
                 container('python') {
-                    sh 'pip install pylint'
+                    sh 'pip install -r test_requirements.txt'
                     sh 'pylint -E app.py'
                 }
             }
