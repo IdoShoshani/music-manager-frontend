@@ -1,87 +1,163 @@
 pipeline {
     agent {
         kubernetes {
-            label 'jenkins-agent'  // This should match the label in your values.yaml
-            yaml """
-apiVersion: v1
-kind: Pod
-metadata:
-  labels:
-    app: jenkins-agent
-spec:
-  containers:
-  - name: jnlp
-    image: idoshoshani123/agent-for-jenkins-with-docker:latest
-    """
+            defaultContainer 'docker'
+            yamlFile 'jenkins-pod.yaml'
         }
     }
     environment {
-        GITLAB_URL = 'https://gitlab.com'
-        DOCKER_IMAGE = "idoshoshani123/music-manager-frontend"
-        DOCKER_IMAGE_TAG = "1.0.${BUILD_NUMBER}"
-        PROJECT_ID = "64588632"
-        TARGET_BRANCH = 'main'
+        IMAGE_NAME = 'idoshoshani123/music-app-frontend'
+        HELM_CHART_PATH = 'charts'
+        VERSION = "${env.BUILD_NUMBER}"
+    }
+    options {
+        timeout(time: 1, unit: 'HOURS')
     }
     stages {
-        stage ("Checkout_Code") {
+        stage('Checkout') {
             steps {
                 checkout scm
             }
         }
+        
+        stage('Python Linter') {
+            steps {
+                container('python') {
+                    sh 'pip install -r test_requirements.txt'
+                    sh 'pylint -E app.py'
+                }
+            }
+        }
+        
+        // stage('Unit Test') {
+        //     steps {
+        //         container('python') {
+        //             sh 'pip install -r test_requirements.txt'
+        //             sh 'pytest --cov=app tests/'
+        //         }
+        //     }
+        // }
 
-        stage ("Build_docker_image") {
+        stage('Build Application Image') {
             steps {
                 script {
-                    dockerImage = docker.build("${DOCKER_IMAGE}:${DOCKER_IMAGE_TAG}", "--no-cache .")
+                    app = docker.build("${env.IMAGE_NAME}:${env.VERSION}")
                 }
             }
         }
 
-        stage("Push_Docker_Image") {
+        stage('Push Application Image') {
             when {
-                branch "main"
+                branch 'main'
             }
             steps {
                 script {
-                    docker.withRegistry("https://registry.hub.docker.com", "docker-hub-idoshoshani123") {
-                        dockerImage.push("${DOCKER_IMAGE_TAG}")
+                    docker.withRegistry("", 'docker-creds') {
+                        app.push("${env.VERSION}")
+                        app.push("latest")
                     }
                 }
             }
         }
 
-        stage("Create merge request") {
+        stage('Verify Helm Chart') {
             when {
-                not {
-                    branch TARGET_BRANCH
-                }
+                branch 'main'
+            }            
+            steps {
+                sh "helm lint ${env.HELM_CHART_PATH}"
             }
+        }
+
+        stage('Update & Push Helm Chart') {
+            when {
+                branch 'main'
+            }            
             steps {
                 script {
-                    withCredentials([string(credentialsId: 'GITLAB_API_TOKEN', variable: 'GITLAB_API_TOKEN')]) {
-                        def response = sh(script: '''
-                            curl -s -o response.json -w "%{http_code}" --header "PRIVATE-TOKEN: $GITLAB_API_TOKEN" -X POST "${GITLAB_URL}/api/v4/projects/${PROJECT_ID}/merge_requests" \
-                            --form "source_branch=${BRANCH_NAME}" \
-                            --form "target_branch=${TARGET_BRANCH}" \
-                            --form "title=MR from ${BRANCH_NAME} into ${TARGET_BRANCH}" \
-                            --form "remove_source_branch=true"
-                        ''', returnStdout: true, shell: '/bin/bash').trim()
-
-                        if (response.startsWith("20")) {
-                            echo "Merge request created successfully."
-                        } else {
-                            echo "Failed to create merge request. Response Code: ${response}"
-                            try {
-                                def jsonResponse = readJSON file: 'response.json'
-                                echo "Error message: ${jsonResponse.message}"
-                            } catch (Exception e) {
-                                echo "Failed to parse JSON response. Error: ${e.message}"
-                            }
-                            error "Merge request creation failed."
-                        }
+                    def registryNamespace = env.IMAGE_NAME.split('/')[0]
+                    withCredentials([usernamePassword(credentialsId: 'docker-creds', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+                        sh """
+                            cd ${env.HELM_CHART_PATH}
+                            
+                            # Update appVersion to Docker Image version with quotes
+                            sed -i "s/^appVersion:.*/appVersion: \\"${VERSION}\\"/" Chart.yaml
+                            
+                            # Update tag to Docker Image version with quotes
+                            sed -i "s/^  tag: .*/  tag: \\"${VERSION}\\"/" values.yaml
+                            
+                            # Update chart version
+                            CURRENT_VERSION=\$(grep 'version:' Chart.yaml | awk '{print \$2}')
+                            MAJOR=\$(echo \$CURRENT_VERSION | cut -d. -f1)
+                            MINOR=\$(echo \$CURRENT_VERSION | cut -d. -f2)
+                            PATCH=\$(echo \$CURRENT_VERSION | cut -d. -f3)
+                            NEW_PATCH=\$((\$PATCH + 1))
+                            NEW_VERSION="\$MAJOR.\$MINOR.\$NEW_PATCH"
+                            sed -i "s/^version:.*/version: \$NEW_VERSION/" Chart.yaml
+                            
+                            # Log in to OCI Registry
+                            echo "\${DOCKER_PASS}" | helm registry login registry-1.docker.io -u "\${DOCKER_USER}" --password-stdin
+                            
+                            # Get version from chart.yaml
+                            CHART_VERSION=\$(sed -n 's/^version: *//p' Chart.yaml)
+                            
+                            # Package Helm Chart
+                            helm package .
+                            
+                            # Debug files
+                            ls -la
+                            
+                            # Push Helm Chart to OCI Registry
+                            helm push music-app-backend-\${CHART_VERSION}.tgz oci://registry-1.docker.io/idoshoshani123
+                        """
                     }
                 }
             }
+        }
+        stage('Push Changes to GitLab') {
+            when { branch 'main' }
+            steps {
+                script {
+                    withCredentials([usernamePassword(credentialsId: 'gitlab-creds', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD')]) {
+                        sh '''
+                            set -e
+                            
+                            # Configure git
+                            git config --global --add safe.directory "${WORKSPACE}"
+                            git config --global user.email "jenkins@example.com"
+                            git config --global user.name "Jenkins"
+                            
+                            git config --global credential.helper '!f() { echo "username=${USERNAME}"; echo "password=${PASSWORD}"; }; f'
+                            
+                            cd "${WORKSPACE}"
+                            
+                            # Set remote with credentials
+                            git remote set-url origin "https://${USERNAME}:${PASSWORD}@gitlab.com/sela-tracks/1109/students/idosh/final_project/application/music-manager-frontend.git"
+                            
+                            # Fetch and checkout main explicitly
+                            git fetch origin
+                            git checkout main
+                            git pull origin main
+                            
+                            git add charts/Chart.yaml
+                            git add charts/values.yaml
+                            
+                            if git diff --staged --quiet; then
+                                echo "No changes to commit"
+                            else
+                                git commit -m "ci: Update image tag to ${BUILD_NUMBER}"
+                                # Push to main
+                                git push origin main
+                            fi
+                        '''
+                    }
+                }
+            }
+        }
+    }
+    post {
+        always {
+            sh 'helm registry logout registry-1.docker.io || true'
         }
     }
 }
