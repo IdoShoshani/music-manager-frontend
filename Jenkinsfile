@@ -108,7 +108,7 @@ pipeline {
                             ls -la
                             
                             # Push Helm Chart to OCI Registry
-                            helm push music-app-backend-\${CHART_VERSION}.tgz oci://registry-1.docker.io/idoshoshani123
+                            helm push music-app-frontend-\${CHART_VERSION}.tgz oci://registry-1.docker.io/idoshoshani123
                         """
                     }
                 }
