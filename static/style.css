@@ -20,17 +20,17 @@
 @media (prefers-color-scheme: dark) {
   :root {
     /* Dark Mode Colors */
-    --primary-green: #1db954;
-    --primary-black: #121212;
-    --primary-grey: #282828;
+    --primary-green: red;
+    --primary-black: red;
+    --primary-grey: red;
     --primary-light-grey: #b3b3b3;
     --primary-white: #ffffff;
-    --background-primary: #121212;
+    --background-primary: red;
     --background-secondary: red;
     --text-primary: #ffffff;
     --text-secondary: #b3b3b3;
-    --card-background: #282828;
-    --card-hover: #333333;
+    --card-background: red;
+    --card-hover: red;
     --border-color: rgba(255, 255, 255, 0.1);
   }
 }
