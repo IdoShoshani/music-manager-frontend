@@ -1,17 +1,17 @@
 /* frontend/static/style.css */
 :root {
   /* Light Mode Colors */
-  --primary-green: #1db954;
+  --primary-green: #1DB954;
   --primary-black: #121212;
   --primary-grey: #282828;
-  --primary-light-grey: #b3b3b3;
-  --primary-white: #ffffff;
-  --background-primary: #ffffff;
-  --background-secondary: #f5f5f5;
+  --primary-light-grey: #B3B3B3;
+  --primary-white: #FFFFFF;
+  --background-primary: #FFFFFF;
+  --background-secondary: #F5F5F5;
   --text-primary: #121212;
   --text-secondary: #666666;
-  --card-background: #ffffff;
-  --card-hover: #f0f0f0;
+  --card-background: #FFFFFF;
+  --card-hover: #F0F0F0;
   --border-color: rgba(0, 0, 0, 0.1);
   --sidebar-width: 240px;
   --header-height: 64px;
@@ -20,17 +20,17 @@
 @media (prefers-color-scheme: dark) {
   :root {
     /* Dark Mode Colors */
-    --primary-green: red;
-    --primary-black: red;
-    --primary-grey: red;
-    --primary-light-grey: #b3b3b3;
-    --primary-white: #ffffff;
-    --background-primary: red;
-    --background-secondary: red;
-    --text-primary: #ffffff;
-    --text-secondary: #b3b3b3;
-    --card-background: red;
-    --card-hover: red;
+    --primary-green: #1DB954;
+    --primary-black: #121212;
+    --primary-grey: #282828;
+    --primary-light-grey: #B3B3B3;
+    --primary-white: #FFFFFF;
+    --background-primary: #121212;
+    --background-secondary: #181818;
+    --text-primary: #FFFFFF;
+    --text-secondary: #B3B3B3;
+    --card-background: #282828;
+    --card-hover: #333333;
     --border-color: rgba(255, 255, 255, 0.1);
   }
 }
@@ -42,8 +42,7 @@
 }
 
 body {
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen,
-    Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
   background-color: var(--background-primary);
   color: var(--text-primary);
   line-height: 1.5;
@@ -274,12 +273,8 @@ input::placeholder {
 }
 
 @keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 /* Copyright Section */
@@ -315,6 +310,7 @@ input::placeholder {
   }
 }
 
+
 .favorite-btn {
   transition: all 0.3s ease;
 }
@@ -341,15 +337,9 @@ input::placeholder {
 
 /* אנימציה לסימון מועדפים */
 @keyframes favoriteAnimation {
-  0% {
-    transform: scale(1);
-  }
-  50% {
-    transform: scale(1.2);
-  }
-  100% {
-    transform: scale(1);
-  }
+  0% { transform: scale(1); }
+  50% { transform: scale(1.2); }
+  100% { transform: scale(1); }
 }
 
 .favorite-btn.active i {
