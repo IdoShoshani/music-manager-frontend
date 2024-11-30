@@ -2,7 +2,7 @@ replicaCount: 1
 
 image:
   repository: idoshoshani123/music-app-frontend
-  tag: "3"
+  tag: "4"
   pullPolicy: IfNotPresent
 
 service:
