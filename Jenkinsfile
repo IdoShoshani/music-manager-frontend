@@ -135,10 +135,7 @@ pipeline {
                             git remote set-url origin "https://${USERNAME}:${PASSWORD}@gitlab.com/sela-tracks/1109/students/idosh/final_project/application/music-manager-frontend.git"
                             
                             # Fetch and checkout main explicitly
-                            git fetch origin
-                            git checkout main
                             git pull origin main
-                            
                             git add charts/Chart.yaml
                             git add charts/values.yaml
                             
